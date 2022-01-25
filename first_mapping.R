@@ -2,7 +2,7 @@
 ### FP Incidence Preliminary Mapping ###
 ####################################
 
-## The below was to enable rnaturalearth to function; would 
+## The below was to enable rnaturalearth to function
 #devtools::install_github("ropenscilabs/rnaturalearth")
 #devtools::install_github("ropenscilabs/rnaturalearthdata")
 #install.packages("rnaturalearthhires",
