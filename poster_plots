@@ -1,0 +1,194 @@
+############################
+## Final Plots for Poster ##
+############################
+
+### Directory Fetch
+getwd()
+setwd("/Users/aidanperez/Documents/FP_incidence_CR/Scripts")
+
+#packages
+library(ggpubr)
+library(ggthemes)
+library(gridExtra)
+library(tidyverse)
+library(lubridate)
+library(janitor)
+library(reshape)
+library(sf)
+library(mapview)
+library(cowplot)
+library(rcartocolor)
+library(rnaturalearth)
+
+### Import Data
+capture_data <- read.csv("2021-10_Cm_capture_data.csv")
+fp_scores <- read.csv("2021-10_Cm_FP_Scores.csv")
+
+# Modified data for plots
+capture_data$Fibropapilloma.Visible<- gsub(pattern = " *",  #detect space(s)
+                                           replacement = "", #replace w/ nothing
+                                           x = capture_data$Fibropapilloma.Visible)
+table(capture_data$Fibropapilloma.Visible, useNA = "ifany")  #confirm that issue is fixed
+charyear <- as.character(capture_data$Year) # changing "Year" from integer to character
+
+# Modified data for maps
+table(capture_data$Site)
+
+cd2 <- capture_data %>%
+  filter(str_detect (string = Site, pattern = "Crystal River")) %>%
+  filter(!is.na(FP.Balazs.Score)) # filter out "NA" values in Balazs score
+
+# check filter
+table(cd2$Site)
+table(cd2$FP.Balazs.Score)
+
+# Florida shapefile 
+florida <- st_read("/Users/aidanperez/Documents/FP_incidence_CR/Mapping/fl_shapefile/Florida_Shoreline_(1_to_40%2C000_Scale).shp")
+# US Shapefile for basic florida model 
+states <- ne_states(country = "United States of America", returnclass = "sf")
+
+
+###########
+## Plots ##
+###########
+
+### Balazs Score per Year w/ Linear Regression
+
+#summary data
+sum_data <- function(y, upper_limit = max(11)) {
+  return( 
+    data.frame(
+      y = 0.95 * upper_limit,
+      label = paste('n =', length(y), '\n',
+                    'x̄ =', round(mean(y), 1), '\n')
+    )
+  )
+}
+
+y_lr <- ggplot(capture_data, aes(Year, FP.Balazs.Score)) + 
+  ylim(0,12.5) +
+  theme_linedraw() + 
+  theme(axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size =12),
+        axis.title.y = element_text(size = 16, face = "bold")) +
+  labs(x = "",
+       y = "Fibropapilloma Balazs Score") + 
+  geom_jitter(shape = 21, col = "#000000", fill = "#09b7e3",
+              size = 3, stroke = 1,
+              width = 0.2, height = 0.2) +
+  stat_summary(fun.data = sum_data, geom = "text") +
+  scale_y_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12))+
+  geom_smooth(method = "lm", se = T, col = "#ed3737" ) 
+
+y_lr
+
+### Stack Bar Graph of Yes and No FP Visible 
+fp_visibility <- capture_data %>%
+  group_by(Year,Fibropapilloma.Visible) %>%
+  summarise(fp_visibility = length((Fibropapilloma.Visible)))
+
+fp_year_summ<- capture_data %>%
+  group_by(Year, Fibropapilloma.Visible) %>%
+  tally() %>%
+  drop_na() %>%
+  group_by(Year) %>%
+  mutate(total.N = sum(n),
+         prop = n / total.N)
+
+# Plotting counts
+blues <- c("#d1d1d1", "#09b7e3")
+
+stack_bg <- ggplot(fp_year_summ, aes(Year, n, fill = Fibropapilloma.Visible)) +
+  geom_col() +
+  scale_fill_manual("FP Visible", values = blues) +
+  theme_linedraw() + 
+  theme(axis.title.x = element_text(size = 16, face = "bold"),
+        axis.title = element_text(size = 10),
+        axis.title.y = element_text(size = 16, face = "bold"),
+        axis.text.x = element_text(size = 8),
+        axis.text.y = element_text(size = 8),
+        title = element_text(size = 14, face = "bold"),
+        legend.title = element_text(size = 12),
+        ) + 
+  scale_x_continuous( breaks = c(2016, 2017, 2018, 2019, 2020, 2021)) +
+  labs(x = "",
+       y = "Fibropapilloma Balazs Score")
+
+stack_bg
+
+### Collection ###
+y_lr
+stack_bg
+
+#############
+## Mapping ##
+#############
+
+#insent map 
+submap <- ggplot() +
+  theme_void() + 
+  geom_sf(data = states) +
+  xlim(-85.5, -82) +
+  ylim (27, 30.2) +
+  annotate("rect", fill = "#09b7e3", alpha = 0.8,
+           xmin = -82.82, xmax = -82.57, ymin = 28.65, ymax = 28.85) +
+  coord_sf() + 
+  theme(plot.background = element_rect(colour = "black", size = 2),
+        plot.margin = margin(2, 2, 2, 2))
+
+#submap
+
+
+# add zoom in of florida location (map in a map)
+
+maplg <- ggplot() +
+  geom_sf(data = florida, fill = "grey") +
+  scale_color_brewer(palette = "YlOrRd" ) + 
+  geom_point(data = cd2, aes(x = GPS_X, y = GPS_Y, color = factor(FP.Balazs.Score)),
+             size = 2.5,
+             alpha = .8 ) +
+  theme_linedraw() + 
+  theme(axis.title = element_text(size = 10),
+        axis.text.x = element_text(size = 8),
+        axis.text.y = element_text(size = 8),
+        title = element_text(size = 14, face = "bold"),
+        legend.title = element_text(size = 12),
+        legend.box.background = element_rect(color = "#000000"),
+        legend.background = element_rect(fill = "#b8b8b8"),
+        legend.key = element_rect(fill = "#b8b8b8"),
+        panel.background = element_rect(fill = "#34c6eb")
+  ) + 
+  guides(color = guide_legend(title = "FP Balazs Score")) + 
+  labs(x = "Longitude", 
+       y = "Latitude",
+       title = "Balazs Score Geospatial Distribution 2016-2021") +
+  xlim(-82.82,-82.67) +
+  ylim(28.7, 28.85) + 
+  coord_sf() 
+
+#maplg
+
+# combine inset with main map 
+inset_map = ggdraw() +
+  draw_plot(maplg) + 
+  draw_plot(submap, x = 0.775, y = 0.12, width = 0.18, height = 0.18)
+
+inset_map
+
+### Collection ### 
+inset_map
+
+
+########
+#Export#
+########
+
+ggsave("inset_map.tiff", plot = inset_map,
+       path = "/Users/aidanperez/Documents/FP_incidence_CR/Poster",
+       dpi = 400)
+ggsave("y_lr.tiff", plot = y_lr,
+       path = "/Users/aidanperez/Documents/FP_incidence_CR/Poster",
+       dpi = 400)
+ggsave("stack_bg.tiff", plot = stack_bg,
+       path = "/Users/aidanperez/Documents/FP_incidence_CR/Poster",
+       dpi = 400)
