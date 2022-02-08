@@ -19,7 +19,6 @@ library(mapview)
 library(cowplot)
 library(rcartocolor)
 library(rnaturalearth)
-library(ggsn)
 
 ### Import Data
 capture_data <- read.csv("2021-10_Cm_capture_data.csv")
@@ -61,26 +60,24 @@ sum_data <- function(y, upper_limit = max(11)) {
     data.frame(
       y = 0.95 * upper_limit,
       label = paste('n =', length(y), '\n',
-                    'x̄ =', round(mean(y), 1), '\n')
-    )
-  )
+                    'x̄ =', round(mean(y), 1), '\n')))
 }
 
 y_lr <- ggplot(capture_data, aes(Year, FP.Balazs.Score)) + 
   ylim(0,12.5) +
   theme_linedraw() + 
-  theme(axis.text.x = element_text(size = 12),
-        axis.text.y = element_text(size =12),
-        axis.title.y = element_text(size = 16, face = "bold")) +
+  theme(axis.text.x = element_text(size = 14),
+        axis.text.y = element_text(size =14),
+        axis.title.y = element_text(size = 20, face = "bold")) +
   labs(x = "",
        y = "Fibropapilloma Balazs Score") + 
   geom_jitter(shape = 21, col = "#000000", fill = "#09b7e3",
               size = 3, stroke = 1,
               width = 0.2, height = 0.2) +
-  stat_summary(fun.data = sum_data, geom = "text") +
+  stat_summary(fun.data = sum_data, geom = "text", size = 7) +
   scale_y_continuous(breaks = c(0,1,2,3,4,5,6,7,8,9,10,11,12))+
   scale_x_continuous( breaks = c(2016, 2017, 2018, 2019, 2020, 2021)) +
-  geom_smooth(method = "lm", se = F, col = "#ed3737" ) 
+  geom_smooth(method = "lm", se = T, col = "#ed3737", alpha = .3) 
 
 y_lr
 
@@ -104,20 +101,20 @@ stack_bg <- ggplot(fp_year_summ, aes(Year, n, fill = Fibropapilloma.Visible)) +
   geom_col() +
   scale_fill_manual("FP Visible", values = blues) +
   theme_linedraw() + 
-  theme(axis.title.x = element_text(size = 16, face = "bold"),
-        axis.title = element_text(size = 10),
-        axis.title.y = element_text(size = 16, face = "bold"),
-        axis.text.x = element_text(size = 10),
-        axis.text.y = element_text(size = 10),
-        title = element_text(size = 14, face = "bold"),
-        legend.title = element_text(size = 12),
+  theme(axis.title.x = element_text(size = 18, face = "bold"),
+        axis.title = element_text(size = 12),
+        axis.title.y = element_text(size = 18, face = "bold"),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        title = element_text(size = 16, face = "bold"),
+        legend.title = element_text(size = 14),
         legend.position = c(0.7,0.7),
         legend.key.size = (unit(1, 'in')),
-        legend.text = element_text(size = 12)
+        legend.text = element_text(size = 14)
         ) + 
   scale_x_continuous( breaks = c(2016, 2017, 2018, 2019, 2020, 2021)) +
   labs(x = "",
-       y = "Number of Turtles")
+       y = "Proportion of Turtles per Year")
 
 stack_bg
 
@@ -141,23 +138,27 @@ submap <- ggplot() +
   theme(plot.background = element_rect(colour = "black", size = 2),
         plot.margin = margin(2, 2, 2, 2))
 
-#submap
-
-
-# add zoom in of florida location (map in a map)
+#geospatial plot balazs score incidence 
 
 maplg <- ggplot() +
   geom_sf(data = florida, fill = "grey") +
   scale_color_brewer(palette = "YlOrRd" ) + 
   geom_point(data = cd2, aes(x = GPS_X, y = GPS_Y, color = factor(FP.Balazs.Score)),
              size = 3,
-             alpha = .85 ) +
+             alpha = .85) +
+#  geom_point(data = cd2, aes (x = GPS_X, y = GPS_Y, color = factor(FP.Balazs.Score)),  # original inset_map file does not contain this parameter 
+          #   shape = 21,
+          #  stroke = 2,  #inset_maps21 has this stroke setting
+          #   stroke = 1, #inset_maps21s2 has this stroke setting 
+          #   size = 3,
+          #   col = "black") + 
   theme_linedraw() + 
-  theme(axis.title = element_text(size = 10),
-        axis.text.x = element_text(size = 8),
-        axis.text.y = element_text(size = 8),
-        title = element_text(size = 14, face = "bold"),
-        legend.title = element_text(size = 12),
+  theme(axis.title = element_text(size = 16),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        title = element_text(size = 18, face = "bold"),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12),
         legend.box.background = element_rect(color = "#000000"),
         legend.background = element_rect(fill = "#b8b8b8"),
         legend.key = element_rect(fill = "#b8b8b8"),
@@ -173,14 +174,14 @@ maplg <- ggplot() +
 
 maplg
 
-# combine inset with main map 
+# combine inset map with main map 
 inset_map = ggdraw() +
   draw_plot(maplg) + 
   draw_plot(submap, x = 0.775, y = 0.12, width = 0.18, height = 0.18)
 
 inset_map
 
-  ### Collection ### 
+### Collection ### 
 inset_map
 
 
@@ -203,3 +204,9 @@ ggsave("stack_bg.tiff", plot = stack_bg,
        width = (unit(9.96, 'in')),
        height = (unit(8.25, 'in')),
        dpi = 400)
+
+#ggsave("inset_maps21s2.png", plot = inset_map,
+#       path = "/Users/aidanperez/Documents/FP_incidence_CR/Poster/temp_graphs",
+#       width = (unit(9.96, 'in')),
+#       height = (unit(8.25, 'in')))
+  
