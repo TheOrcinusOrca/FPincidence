@@ -143,15 +143,14 @@ submap <- ggplot() +
 maplg <- ggplot() +
   geom_sf(data = florida, fill = "grey") +
   scale_color_brewer(palette = "YlOrRd" ) + 
+  geom_point(data = cd2, aes (x = GPS_X, y = GPS_Y, color = factor(FP.Balazs.Score)), 
+     shape = 21,
+     stroke = 2,
+     size = 3,
+     col = "black") + 
   geom_point(data = cd2, aes(x = GPS_X, y = GPS_Y, color = factor(FP.Balazs.Score)),
              size = 3,
              alpha = .85) +
-#  geom_point(data = cd2, aes (x = GPS_X, y = GPS_Y, color = factor(FP.Balazs.Score)),  # original inset_map file does not contain this parameter 
-          #   shape = 21,
-          #  stroke = 2,  #inset_maps21 has this stroke setting
-          #   stroke = 1, #inset_maps21s2 has this stroke setting 
-          #   size = 3,
-          #   col = "black") + 
   theme_linedraw() + 
   theme(axis.title = element_text(size = 16),
         axis.text.x = element_text(size = 12),
@@ -205,8 +204,8 @@ ggsave("stack_bg.tiff", plot = stack_bg,
        height = (unit(8.25, 'in')),
        dpi = 400)
 
-#ggsave("inset_maps21s2.png", plot = inset_map,
-#       path = "/Users/aidanperez/Documents/FP_incidence_CR/Poster/temp_graphs",
-#       width = (unit(9.96, 'in')),
-#       height = (unit(8.25, 'in')))
+#ggsave("inset_maps21s23.png", plot = inset_map,
+#     path = "/Users/aidanperez/Documents/FP_incidence_CR/Poster/temp_graphs",
+#      width = (unit(9.96, 'in')),
+#      height = (unit(8.25, 'in')))
   
