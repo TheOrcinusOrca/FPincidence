@@ -94,8 +94,9 @@ fp_year_summ<- capture_data %>%
   mutate(total.N = sum(n),
          prop = n / total.N)
 
-# Plotting counts
 blues <- c("#d1d1d1", "#09b7e3")
+
+# Plotting counts
 
 stack_bg <- ggplot(fp_year_summ, aes(Year, n, fill = Fibropapilloma.Visible)) +
   geom_col() +
@@ -111,12 +112,35 @@ stack_bg <- ggplot(fp_year_summ, aes(Year, n, fill = Fibropapilloma.Visible)) +
         legend.position = c(0.7,0.7),
         legend.key.size = (unit(1, 'in')),
         legend.text = element_text(size = 14)
-        ) + 
+  ) + 
   scale_x_continuous( breaks = c(2016, 2017, 2018, 2019, 2020, 2021)) +
   labs(x = "",
        y = "Proportion of Turtles per Year")
 
 stack_bg
+
+# plotting proportions
+
+stack_prop <- ggplot(fp_year_summ, aes(Year, prop, fill = Fibropapilloma.Visible)) +
+  geom_col() +
+  scale_fill_manual("FP Visible", values = blues) +
+  theme_linedraw() + 
+  theme(axis.title.x = element_text(size = 18, face = "bold"),
+        axis.title = element_text(size = 12),
+        axis.title.y = element_text(size = 18, face = "bold"),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        title = element_text(size = 16, face = "bold"),
+        legend.title = element_text(size = 14),
+        legend.key.size = (unit(1, 'in')),
+        legend.text = element_text(size = 14)
+  ) + 
+  scale_x_continuous( breaks = c(2016, 2017, 2018, 2019, 2020, 2021)) +
+  scale_y_continuous(label = scales::percent ) + 
+  labs(x = "",
+       y = "Proportion of Turtles per Year")
+
+stack_prop
 
 ### Collection ###
 y_lr
@@ -144,10 +168,10 @@ maplg <- ggplot() +
   geom_sf(data = florida, fill = "grey") +
   scale_color_brewer(palette = "YlOrRd" ) + 
   geom_point(data = cd2, aes (x = GPS_X, y = GPS_Y, color = factor(FP.Balazs.Score)), 
-     shape = 21,
-     stroke = 2,
-     size = 3,
-     col = "black") + 
+             shape = 21,
+             stroke = 2,
+             size = 3,
+             col = "black") + 
   geom_point(data = cd2, aes(x = GPS_X, y = GPS_Y, color = factor(FP.Balazs.Score)),
              size = 3,
              alpha = .85) +
@@ -203,9 +227,14 @@ ggsave("stack_bg.tiff", plot = stack_bg,
        width = (unit(9.96, 'in')),
        height = (unit(8.25, 'in')),
        dpi = 400)
+ggsave("stack_prop.tiff", plot = stack_prop,
+       path = "/Users/aidanperez/Documents/FP_incidence_CR/Poster/plots",
+       width = (unit(9.96, 'in')),
+       height = (unit(8.25, 'in')),
+       dpi = 400)
 
 #ggsave("inset_maps21s23.png", plot = inset_map,
 #     path = "/Users/aidanperez/Documents/FP_incidence_CR/Poster/temp_graphs",
 #      width = (unit(9.96, 'in')),
 #      height = (unit(8.25, 'in')))
-  
+
