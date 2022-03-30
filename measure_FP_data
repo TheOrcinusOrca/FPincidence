@@ -1,0 +1,159 @@
+####################################################################
+## Continued FP Incidence; Exploring Demographic Data Spring 2022 ##
+####################################################################
+
+##############################
+
+### set working directory
+getwd()
+setwd("/Users/aidanperez/Documents/FP_incidence_CR/Scripts")
+
+### load packages 
+library(ggpubr)
+library(ggthemes)
+library(gridExtra)
+library(tidyverse)
+library(lubridate)
+library(janitor)
+library(reshape)
+
+### import data and modify data 
+capture_data <- read.csv("2021-10_Cm_capture_data.csv")
+fp_scores <- read.csv("2021-10_Cm_FP_Scores.csv")
+
+# Make sure all "No"s are consistent in spelling; removes any extra space
+capture_data$Fibropapilloma.Visible<- gsub(pattern = " *",  #detect space(s)
+                                           replacement = "", #replace w/ nothing
+                                           x = capture_data$Fibropapilloma.Visible)
+table(capture_data$Fibropapilloma.Visible, useNA = "ifany")  #confirm that issue is fixed
+
+# create two data frames, one with turtles displaying FP, and those without 
+green_w_fp <- filter(capture_data, Fibropapilloma.Visible == "Yes")
+green_wo_fp <- filter(capture_data, Fibropapilloma.Visible == "No")
+
+# Modified data for plots
+capture_data$Fibropapilloma.Visible<- gsub(pattern = " *",  #detect space(s)
+                                           replacement = "", #replace w/ nothing
+                                           x = capture_data$Fibropapilloma.Visible)
+table(capture_data$Fibropapilloma.Visible, useNA = "ifany")  #confirm that issue is fixed
+charyear <- as.character(capture_data$Year) # changing "Year" from integer to character
+
+# Modified data for maps
+table(capture_data$Site)
+
+cd2 <- capture_data %>%
+  filter(str_detect (string = Site, pattern = "Crystal River")) %>%
+  filter(!is.na(FP.Balazs.Score)) # filter out "NA" values in Balazs score
+
+# check filter
+table(cd2$Site)
+table(cd2$FP.Balazs.Score)
+
+##################
+## Basic Plots ###
+##################
+
+### qualitive comparisons relating balazs score and sizes
+### create a scatterplot comparing Standard Carapice length and width and Balazs Score
+
+
+# standard carapice width
+sSCW <- ggplot(cd2, aes(FP.Balazs.Score, SCWidth.cm)) +
+  geom_jitter(size = 2, width = 0.2, height = 0.2) +
+  labs(title = "Carapice Width") +
+  scale_x_continuous(breaks = c(1,2,3,4,5,6,7,8,9,10,11,12)) + 
+  stat_smooth(col = "red") +
+  geom_smooth(method = "lm", se = F, col = "#ed3737", alpha = .3) +
+  theme_linedraw()+
+  coord_flip()
+
+sSCW
+
+# standard carapice length 
+sSCL <- ggplot(cd2, aes(FP.Balazs.Score, SCL.Standard.cm)) +
+  geom_jitter(size = 2, width = 0.2, height = 0.2) +
+  labs(title = "Standard Carapice Length") +
+  scale_x_continuous(breaks = c(1,2,3,4,5,6,7,8,9,10,11,12)) + 
+  stat_smooth(col = "red") +
+  geom_smooth(method = "lm", se = F, col = "#ed3737", alpha = .3) +
+  theme_linedraw() +
+  coord_flip()
+
+sSCL
+
+### create a scatterplot comparing Weight in kg and Balazs score
+
+sWeight <- ggplot(cd2, aes(FP.Balazs.Score, Weight.kg)) +
+  geom_jitter(size = 2, width = 0.2, height = 0.2) +
+  labs(title = "Comparing Weight (kg)") +
+  scale_x_continuous(breaks = c(1,2,3,4,5,6,7,8,9,10,11,12)) + 
+  stat_smooth(col = "red") +
+  geom_smooth(method = "lm", se = F, col = "#ed3737", alpha = .3) +
+  theme_linedraw() +
+  coord_flip()
+
+sWeight
+
+### leach presence and FP presence and balazs score severity 
+
+summary(cd2$Leeches)
+table(cd2$Leeches)
+
+# proportion of turtles with FP and leeches 
+leech_sum<- cd2 %>%
+  group_by(Fibropapilloma.Visible, Leeches) %>%
+  tally() %>%
+  drop_na() %>%
+  group_by(Fibropapilloma.Visible) %>%
+  mutate(total.N = sum(n),
+         prop = n / total.N)
+
+blues <- c("#d1d1d1", "#09b7e3")
+
+prop_leech <- ggplot(leech_sum, aes(Fibropapilloma.Visible, n, fill = Leeches)) +
+  geom_col() + 
+  scale_fill_manual(values = blues) +
+  labs(title = "Proportion of Leeches and FP Present",
+       x = "Visible FP",
+       y = "Leech Presence") +
+  theme_linedraw() +
+  theme(axis.text.x = element_text(size = 0))
+
+prop_leech
+
+# Balazs score severity by leach presence 
+leech_y <- filter(cd2, Leeches == "Yes")
+
+ggplot(leech_y, aes(Leeches, FP.Balazs.Score)) +
+  geom_jitter(size = 3,
+              width = 0.1, height = 0) +
+  theme_linedraw()
+
+####################
+## Advanced Plots ##
+####################
+
+WIP 
+
+#########################
+## Save plots as jpegs ##
+#########################
+
+# auto generated fit
+ggsave("ImpSCL.jpeg", plot = sSCL,
+       path = "/Users/aidanperez/Documents/FP_incidence_CR/Plots/demographic_2")
+ggsave("ImpSCW.jpeg", plot = sSCW,
+       path = "/Users/aidanperez/Documents/FP_incidence_CR/Plots/demographic_2")
+ggsave("ImpWeight.jpeg", plot = sWeight,
+       path = "/Users/aidanperez/Documents/FP_incidence_CR/Plots/demographic_2")
+#2nd order 
+ggsave("ImpSCL2.jpeg", plot = sSCL,
+       path = "/Users/aidanperez/Documents/FP_incidence_CR/Plots/demographic_2")
+ggsave("ImpSCW2.jpeg", plot = sSCW,
+       path = "/Users/aidanperez/Documents/FP_incidence_CR/Plots/demographic_2")
+ggsave("ImpWeight2.jpeg", plot = sWeight,
+       path = "/Users/aidanperez/Documents/FP_incidence_CR/Plots/demographic_2")
+##
+
+ggsave("leech.jpeg", plot = prop_leech,
+       path = "/Users/aidanperez/Documents/FP_incidence_CR/Plots/demographic_data")
