@@ -1,0 +1,38 @@
+#######################################################################
+## Crystal River Chelonia mydas FP Incidence and Demographic Project ##
+#######################################################################
+
+######
+# Load libraries 
+######
+
+library(dplyr)
+library(gridExtra)
+library(ggthemes)
+library(tidyverse)
+library(lubridate)
+library(janitor)
+
+#####
+# source CSVs
+#####
+
+CaptureData <- read.csv("/Users/aidanperez/Documents/FP_incidence_CR/Datasets/2022-02_Cm_captures.csv")
+FPScores <- read.csv("/Users/aidanperez/Documents/FP_incidence_CR/Datasets/2022-02_Cm_FP_Scores.csv")
+
+#####
+# Modify data 
+#####
+
+CaptureData$Fibropapilloma.Visible<- gsub(pattern = " *",  #detect space(s)
+                                           replacement = "", #replace w/ nothing
+                                           x = CaptureData$Fibropapilloma.Visible)
+table(CaptureData$Fibropapilloma.Visible, useNA = "ifany")  #confirm that issue is fixed
+
+table(CaptureData$Site)
+CaptureData <- CaptureData %>%
+  filter(str_detect (string = Site, pattern = "Crystal River")) %>% # only CR data
+  filter(str_detect (string = Species, pattern = "Cm")) %>% # only Chelonia mydas
+  filter(!is.na(FP.Balazs.Score)) # filter out "NA" values in Balazs score
+
+table(CaptureData$Species)
