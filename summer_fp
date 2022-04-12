@@ -32,7 +32,46 @@ table(CaptureData$Fibropapilloma.Visible, useNA = "ifany")  #confirm that issue 
 table(CaptureData$Site)
 CaptureData <- CaptureData %>%
   filter(str_detect (string = Site, pattern = "Crystal River")) %>% # only CR data
-  filter(str_detect (string = Species, pattern = "Cm")) %>% # only Chelonia mydas
-  filter(!is.na(FP.Balazs.Score)) # filter out "NA" values in Balazs score
+  filter(str_detect (string = Species, pattern = "Cm")) # only Chelonia mydas
 
 table(CaptureData$Species)
+table(CaptureData$Fibropapilloma.Visible)
+
+fp_visibility <- CaptureData %>%
+  group_by(Year,Fibropapilloma.Visible) %>%
+  summarise(fp_visibility = length((Fibropapilloma.Visible)))
+
+fp_year_summ<- CaptureData %>%
+  group_by(Year, Fibropapilloma.Visible) %>%
+  tally() %>%
+  drop_na() %>%
+  group_by(Year) %>%
+  mutate(total.N = sum(n),
+         prop = n / total.N)
+
+#####
+# Plots 
+#####
+
+# Stacked bar histogram FP and years 
+stack_prop <- ggplot(fp_year_summ, aes(Year, prop, fill = Fibropapilloma.Visible)) +
+  geom_col() +
+  theme_linedraw() + 
+  scale_fill_grey() + 
+  scale_x_continuous( breaks = c(2016, 2017, 2018, 2019, 2020, 2021, 2022)) +
+  scale_y_continuous(label = scales::percent ) + 
+  labs(x = "",
+       y = "Proportion of Turtles per Year")
+stack_prop
+
+# Stacked histrogram of FP and SCL 
+
+# Proportion FP Visibility and year
+
+# Proportion FP Visibility and season 
+
+# Proportion of FP and SCL
+
+
+
+
